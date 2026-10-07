@@ -1,0 +1,17 @@
+{
+  "short_name": "Conjugation",
+  "name": "Conjugation Station",
+  "description": "Spanish verb conjugation trainer with spaced repetition and 300 common verbs.",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0f172a",
+  "theme_color": "#1e293b",
+  "icons": [
+    {
+      "src": "data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' rx='20' fill='%232563eb'/><text x='50' y='65' font-family='system-ui,sans-serif' font-size='48' font-weight='bold' fill='white' text-anchor='middle'>CS</text></svg>",
+      "sizes": "192x192 512x512",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
