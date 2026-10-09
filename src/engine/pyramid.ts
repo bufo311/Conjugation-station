@@ -1,8 +1,8 @@
 import { Verb, VocabEntry, LeitnerCard } from '../types';
 import { VERB_LIBRARY, conjugate } from '../data/verbs';
-import { VOCAB_CORE_500, VOCAB_FRASES } from '../data/vocab';
+import { VOCAB_CORE_500, VOCAB_FRASES, VOCAB_ADVANCED } from '../data/vocab';
 
-export type PyramidType = 'verbs' | 'vocab' | 'frases';
+export type PyramidType = 'verbs' | 'vocab' | 'frases' | 'advanced';
 
 export interface PyramidLayer<T = any> {
   layerNumber: number;
@@ -55,7 +55,7 @@ export function getVocabLevel(vocabId: string, cards: LeitnerCard[]): number {
 }
 
 // Compute Verbs Pyramid (12 verbs per layer)
-export function computeVerbsPyramid(cards: LeitnerCard[]): PyramidStatus<Verb> {
+export function computeVerbsPyramid(cards: LeitnerCard[], unlockAll: boolean = false): PyramidStatus<Verb> {
   const LAYER_SIZE = 12;
   const totalLayers = Math.ceil(VERB_LIBRARY.length / LAYER_SIZE);
   const layers: PyramidLayer<Verb>[] = [];
@@ -81,12 +81,10 @@ export function computeVerbsPyramid(cards: LeitnerCard[]): PyramidStatus<Verb> {
     const totalCount = layerItems.length;
     const requiredToUnlockNext = Math.ceil(totalCount * 0.8);
 
-    // Layer 1 is always unlocked.
-    // Layer K unlocks if Layer K-1 is unlocked AND has >= 80% mastered items.
     let isUnlocked = false;
     let unlockCondition = '';
 
-    if (layerNum === 1) {
+    if (unlockAll || layerNum === 1) {
       isUnlocked = true;
     } else {
       const prevReq = Math.ceil(previousLayerTotal * 0.8);
@@ -132,10 +130,12 @@ export function computeVerbsPyramid(cards: LeitnerCard[]): PyramidStatus<Verb> {
     currentLayer.requiredToUnlock - currentLayer.masteredCount
   );
 
-  let summaryText = `Verbs — Layer ${currentLayerNumber}: ${totalMasteredOverall}/${totalUnlockedCount} mastered`;
-  if (currentLayerNumber < totalLayers && neededToUnlock > 0) {
+  let summaryText = unlockAll
+    ? `Verbos — Modo Libre (${unlockedItems.length} verbos activos)`
+    : `Verbs — Layer ${currentLayerNumber}: ${totalMasteredOverall}/${totalUnlockedCount} mastered`;
+  if (!unlockAll && currentLayerNumber < totalLayers && neededToUnlock > 0) {
     summaryText += ` · ${neededToUnlock} to go to unlock Layer ${currentLayerNumber + 1}`;
-  } else if (currentLayerNumber < totalLayers) {
+  } else if (!unlockAll && currentLayerNumber < totalLayers) {
     summaryText += ` · Layer ${currentLayerNumber + 1} ready to unlock!`;
   }
 
@@ -143,7 +143,7 @@ export function computeVerbsPyramid(cards: LeitnerCard[]): PyramidStatus<Verb> {
     type: 'verbs',
     title: 'Verbs Pyramid',
     layers,
-    currentLayerNumber,
+    currentLayerNumber: unlockAll ? totalLayers : currentLayerNumber,
     totalMastered: totalMasteredOverall,
     totalUnlockedItems: totalUnlockedCount,
     totalItems: VERB_LIBRARY.length,
@@ -153,7 +153,7 @@ export function computeVerbsPyramid(cards: LeitnerCard[]): PyramidStatus<Verb> {
 }
 
 // Compute Vocab Pyramid (25 words per layer)
-export function computeVocabPyramid(cards: LeitnerCard[]): PyramidStatus<VocabEntry> {
+export function computeVocabPyramid(cards: LeitnerCard[], unlockAll: boolean = false): PyramidStatus<VocabEntry> {
   const LAYER_SIZE = 25;
   const totalLayers = Math.ceil(VOCAB_CORE_500.length / LAYER_SIZE);
   const layers: PyramidLayer<VocabEntry>[] = [];
@@ -182,7 +182,7 @@ export function computeVocabPyramid(cards: LeitnerCard[]): PyramidStatus<VocabEn
     let isUnlocked = false;
     let unlockCondition = '';
 
-    if (layerNum === 1) {
+    if (unlockAll || layerNum === 1) {
       isUnlocked = true;
     } else {
       const prevReq = Math.ceil(previousLayerTotal * 0.8);
@@ -227,8 +227,10 @@ export function computeVocabPyramid(cards: LeitnerCard[]): PyramidStatus<VocabEn
     currentLayer.requiredToUnlock - currentLayer.masteredCount
   );
 
-  let summaryText = `Vocab — Layer ${currentLayerNumber}: ${totalMasteredOverall}/${totalUnlockedCount} mastered`;
-  if (currentLayerNumber < totalLayers && neededToUnlock > 0) {
+  let summaryText = unlockAll
+    ? `Vocabulario — Modo Libre (${unlockedItems.length} palabras activas)`
+    : `Vocab — Layer ${currentLayerNumber}: ${totalMasteredOverall}/${totalUnlockedCount} mastered`;
+  if (!unlockAll && currentLayerNumber < totalLayers && neededToUnlock > 0) {
     summaryText += ` · ${neededToUnlock} to go to unlock Layer ${currentLayerNumber + 1}`;
   }
 
@@ -236,7 +238,7 @@ export function computeVocabPyramid(cards: LeitnerCard[]): PyramidStatus<VocabEn
     type: 'vocab',
     title: 'Vocab Pyramid',
     layers,
-    currentLayerNumber,
+    currentLayerNumber: unlockAll ? totalLayers : currentLayerNumber,
     totalMastered: totalMasteredOverall,
     totalUnlockedItems: totalUnlockedCount,
     totalItems: VOCAB_CORE_500.length,
@@ -246,7 +248,7 @@ export function computeVocabPyramid(cards: LeitnerCard[]): PyramidStatus<VocabEn
 }
 
 // Compute Frases Pyramid (15 phrases per layer)
-export function computeFrasesPyramid(cards: LeitnerCard[]): PyramidStatus<VocabEntry> {
+export function computeFrasesPyramid(cards: LeitnerCard[], unlockAll: boolean = false): PyramidStatus<VocabEntry> {
   const LAYER_SIZE = 15;
   const totalLayers = Math.ceil(VOCAB_FRASES.length / LAYER_SIZE);
   const layers: PyramidLayer<VocabEntry>[] = [];
@@ -275,7 +277,7 @@ export function computeFrasesPyramid(cards: LeitnerCard[]): PyramidStatus<VocabE
     let isUnlocked = false;
     let unlockCondition = '';
 
-    if (layerNum === 1) {
+    if (unlockAll || layerNum === 1) {
       isUnlocked = true;
     } else {
       const prevReq = Math.ceil(previousLayerTotal * 0.8);
@@ -320,8 +322,10 @@ export function computeFrasesPyramid(cards: LeitnerCard[]): PyramidStatus<VocabE
     currentLayer.requiredToUnlock - currentLayer.masteredCount
   );
 
-  let summaryText = `Frases — Layer ${currentLayerNumber}: ${totalMasteredOverall}/${totalUnlockedCount} mastered`;
-  if (currentLayerNumber < totalLayers && neededToUnlock > 0) {
+  let summaryText = unlockAll
+    ? `Frases — Modo Libre (${unlockedItems.length} giros activos)`
+    : `Frases — Layer ${currentLayerNumber}: ${totalMasteredOverall}/${totalUnlockedCount} mastered`;
+  if (!unlockAll && currentLayerNumber < totalLayers && neededToUnlock > 0) {
     summaryText += ` · ${neededToUnlock} to go to unlock Layer ${currentLayerNumber + 1}`;
   }
 
@@ -329,10 +333,98 @@ export function computeFrasesPyramid(cards: LeitnerCard[]): PyramidStatus<VocabE
     type: 'frases',
     title: 'Frases Pyramid',
     layers,
-    currentLayerNumber,
+    currentLayerNumber: unlockAll ? totalLayers : currentLayerNumber,
     totalMastered: totalMasteredOverall,
     totalUnlockedItems: totalUnlockedCount,
     totalItems: VOCAB_FRASES.length,
+    unlockedItems,
+    summaryText,
+  };
+}
+
+// Compute Advanced B2/C1 Pyramid (15 items per layer)
+export function computeAdvancedPyramid(cards: LeitnerCard[], unlockAll: boolean = false): PyramidStatus<VocabEntry> {
+  const LAYER_SIZE = 15;
+  const totalLayers = Math.ceil(VOCAB_ADVANCED.length / LAYER_SIZE);
+  const layers: PyramidLayer<VocabEntry>[] = [];
+
+  let previousLayerUnlocked = true;
+  let previousLayerMasteredCount = 0;
+  let previousLayerTotal = 0;
+  let currentLayerNumber = 1;
+  let totalMasteredOverall = 0;
+  const unlockedItems: VocabEntry[] = [];
+
+  for (let i = 0; i < totalLayers; i++) {
+    const layerNum = i + 1;
+    const startIdx = i * LAYER_SIZE;
+    const endIdx = Math.min(startIdx + LAYER_SIZE, VOCAB_ADVANCED.length);
+    const layerItems = VOCAB_ADVANCED.slice(startIdx, endIdx);
+
+    const masteredCount = layerItems.filter(
+      (v) => getVocabLevel(v.id, cards) >= 3
+    ).length;
+
+    totalMasteredOverall += masteredCount;
+    const totalCount = layerItems.length;
+    const requiredToUnlockNext = Math.ceil(totalCount * 0.8);
+
+    let isUnlocked = false;
+    let unlockCondition = '';
+
+    if (unlockAll || layerNum === 1) {
+      isUnlocked = true;
+    } else {
+      const prevReq = Math.ceil(previousLayerTotal * 0.8);
+      if (previousLayerUnlocked && previousLayerMasteredCount >= prevReq) {
+        isUnlocked = true;
+      } else {
+        const remaining = Math.max(0, prevReq - previousLayerMasteredCount);
+        unlockCondition = `Master at least ${prevReq}/${previousLayerTotal} items in Layer ${layerNum - 1} (${remaining} more needed at Level 3+)`;
+      }
+    }
+
+    if (isUnlocked) {
+      currentLayerNumber = layerNum;
+      unlockedItems.push(...layerItems);
+    }
+
+    const isCompleted = masteredCount === totalCount;
+    const progressPct = totalCount > 0 ? Math.round((masteredCount / totalCount) * 100) : 0;
+
+    layers.push({
+      layerNumber: layerNum,
+      name: `Capa Avanzada ${layerNum}`,
+      items: layerItems,
+      isUnlocked,
+      isCompleted,
+      masteredCount,
+      totalCount,
+      requiredToUnlock: requiredToUnlockNext,
+      unlockCondition,
+      progressPct,
+    });
+
+    previousLayerUnlocked = isUnlocked;
+    previousLayerMasteredCount = masteredCount;
+    previousLayerTotal = totalCount;
+  }
+
+  const currentLayer = layers[currentLayerNumber - 1];
+  const totalUnlockedCount = unlockedItems.length;
+
+  let summaryText = unlockAll
+    ? `Avanzado C1 — Modo Libre (${unlockedItems.length} ítems activos)`
+    : `Avanzado C1 — Capa ${currentLayerNumber}: ${totalMasteredOverall}/${totalUnlockedCount} dominados`;
+
+  return {
+    type: 'advanced',
+    title: 'Pirámide Avanzada (B2/C1)',
+    layers,
+    currentLayerNumber: unlockAll ? totalLayers : currentLayerNumber,
+    totalMastered: totalMasteredOverall,
+    totalUnlockedItems: totalUnlockedCount,
+    totalItems: VOCAB_ADVANCED.length,
     unlockedItems,
     summaryText,
   };

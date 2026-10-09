@@ -193,7 +193,12 @@ export const VerbsScreen: React.FC<VerbsScreenProps> = ({
       {/* ==================== VERB CONJUGATION MODAL ==================== */}
       {selectedVerb && (
         <div className="fixed inset-0 z-50 bg-black/60 backdrop-blur-xs flex items-end sm:items-center justify-center p-0 sm:p-4 animate-in fade-in">
-          <div className="bg-white dark:bg-slate-900 w-full sm:max-w-2xl max-h-[90vh] rounded-t-3xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4">
+          <div
+            className="bg-white dark:bg-slate-900 w-full sm:max-w-2xl max-h-[90vh] rounded-t-3xl sm:rounded-3xl border border-slate-200 dark:border-slate-800 shadow-2xl flex flex-col overflow-hidden animate-in slide-in-from-bottom-4"
+            style={{
+              paddingBottom: 'calc(max(12px, env(safe-area-inset-bottom, 12px)) + var(--browser-bottom-inset, 0px))',
+            }}
+          >
             {/* Modal header */}
             <div className="p-5 border-b border-slate-100 dark:border-slate-800 flex items-center justify-between">
               <div className="flex items-center gap-3">

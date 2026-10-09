@@ -5,6 +5,7 @@ import {
   computeVerbsPyramid,
   computeVocabPyramid,
   computeFrasesPyramid,
+  computeAdvancedPyramid,
   PyramidLayer,
   getVerbLevel,
   getVocabLevel,
@@ -46,12 +47,15 @@ export const PyramidProgressView: React.FC<PyramidProgressViewProps> = ({
   const verbsPyramid = computeVerbsPyramid(srsCards);
   const vocabPyramid = computeVocabPyramid(srsCards);
   const frasesPyramid = computeFrasesPyramid(srsCards);
+  const advancedPyramid = computeAdvancedPyramid(srsCards);
 
   const currentPyramid =
     selectedPyramid === 'verbs'
       ? verbsPyramid
       : selectedPyramid === 'vocab'
       ? vocabPyramid
+      : selectedPyramid === 'advanced'
+      ? advancedPyramid
       : frasesPyramid;
 
   const getItemLevel = (item: any): number => {
@@ -110,10 +114,10 @@ export const PyramidProgressView: React.FC<PyramidProgressViewProps> = ({
         </p>
 
         {/* Pyramid switcher chips */}
-        <div className="grid grid-cols-3 gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl">
+        <div className="grid grid-cols-4 gap-1 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl text-[11px]">
           <button
             onClick={() => setSelectedPyramid('verbs')}
-            className={`py-2 px-1 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+            className={`py-2 px-1 text-center font-bold rounded-xl transition-all flex flex-col sm:flex-row items-center justify-center gap-1 ${
               selectedPyramid === 'verbs'
                 ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
@@ -124,18 +128,29 @@ export const PyramidProgressView: React.FC<PyramidProgressViewProps> = ({
           </button>
           <button
             onClick={() => setSelectedPyramid('vocab')}
-            className={`py-2 px-1 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+            className={`py-2 px-1 text-center font-bold rounded-xl transition-all flex flex-col sm:flex-row items-center justify-center gap-1 ${
               selectedPyramid === 'vocab'
                 ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
             }`}
           >
             <BookA className="w-3.5 h-3.5" />
-            <span>Vocab</span>
+            <span>Core 500</span>
+          </button>
+          <button
+            onClick={() => setSelectedPyramid('advanced')}
+            className={`py-2 px-1 text-center font-bold rounded-xl transition-all flex flex-col sm:flex-row items-center justify-center gap-1 ${
+              selectedPyramid === 'advanced'
+                ? 'bg-white dark:bg-slate-900 text-purple-600 dark:text-purple-400 shadow-xs'
+                : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
+            }`}
+          >
+            <Sparkles className="w-3.5 h-3.5" />
+            <span>Avanzado</span>
           </button>
           <button
             onClick={() => setSelectedPyramid('frases')}
-            className={`py-2 px-1 text-xs font-bold rounded-xl transition-all flex items-center justify-center gap-1.5 ${
+            className={`py-2 px-1 text-center font-bold rounded-xl transition-all flex flex-col sm:flex-row items-center justify-center gap-1 ${
               selectedPyramid === 'frases'
                 ? 'bg-white dark:bg-slate-900 text-blue-600 dark:text-blue-400 shadow-xs'
                 : 'text-slate-600 dark:text-slate-400 hover:text-slate-900'
@@ -395,7 +410,7 @@ export const PyramidProgressView: React.FC<PyramidProgressViewProps> = ({
                 }}
                 className="w-full py-3 bg-blue-600 hover:bg-blue-700 text-white font-extrabold rounded-xl text-xs flex items-center justify-center gap-2 shadow-sm"
               >
-                <span>Practicar este Mazo</span>
+                <span>Comenzar Quiz Mixto</span>
                 <ArrowRight className="w-4 h-4" />
               </button>
             </div>

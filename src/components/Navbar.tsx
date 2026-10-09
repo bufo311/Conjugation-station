@@ -15,7 +15,7 @@ export const Navbar: React.FC<NavbarProps> = ({
   dueCount,
 }) => {
   const tabs = [
-    { id: 'practice', label: 'Practice', icon: Target },
+    { id: 'practice', label: 'Quiz', icon: Target },
     { id: 'vocab', label: 'Vocab', icon: BookA },
     { id: 'review', label: 'Review', icon: RotateCcw, badge: dueCount },
     { id: 'verbs', label: 'Verbs', icon: BookOpen },
@@ -25,8 +25,10 @@ export const Navbar: React.FC<NavbarProps> = ({
 
   return (
     <nav
-      className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800"
-      style={{ paddingBottom: 'env(safe-area-inset-bottom, 8px)' }}
+      className="fixed bottom-0 left-0 right-0 z-40 bg-white/95 dark:bg-slate-900/95 backdrop-blur-md border-t border-slate-200 dark:border-slate-800 transition-[padding-bottom] duration-150 shadow-lg"
+      style={{
+        paddingBottom: 'calc(max(8px, env(safe-area-inset-bottom, 8px)) + var(--browser-bottom-inset, 0px))',
+      }}
     >
       <div className="max-w-md mx-auto px-1 flex justify-around items-center h-16">
         {tabs.map((tab) => {

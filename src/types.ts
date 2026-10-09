@@ -95,7 +95,8 @@ export interface VocabEntry {
   type?: 'word' | 'chunk';
   category?: string;
   note?: string;
-  deckId: 'core500' | 'core1000' | 'core2000' | 'frases';
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
+  deckId: 'core500' | 'core1000' | 'core2000' | 'frases' | 'advanced';
 }
 
 export interface VocabQuestion {
@@ -107,6 +108,28 @@ export interface VocabQuestion {
   correctAnswer: string;
   options: string[];
   explanation: string;
+}
+
+export type QuizQuestionType = 'verb' | 'vocab' | 'phrase';
+
+export interface UnifiedQuestion {
+  id: string;
+  type: QuizQuestionType;
+  prompt: string; // Spanish sentence with blank ___
+  englishTranslation: string; // English translation of sentence
+  correctAnswer: string;
+  options: string[];
+  explanation: string;
+  difficulty?: 'beginner' | 'intermediate' | 'advanced';
+  verbData?: {
+    verb: Verb;
+    tense: TenseKey;
+    pronoun: Pronoun;
+    template: SentenceTemplate;
+  };
+  vocabData?: {
+    entry: VocabEntry;
+  };
 }
 
 export interface UserStats {
@@ -127,6 +150,9 @@ export interface UserStats {
     soundEffects: boolean;
     autoSpeak: boolean;
     newWordsPerDay?: number;
+    vocabDifficulty?: 'all' | 'beginner' | 'intermediate' | 'advanced';
+    unlockAllLayers?: boolean;
+    verbPoolMode?: 'pyramid' | 'all' | 'irregulars';
   };
 }
 

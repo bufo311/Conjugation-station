@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useMemo } from 'react';
 import { UserStats, TenseKey, LeitnerCard } from '../types';
 import { TENSE_NAMES } from '../engine/conjugator';
 import {
@@ -32,6 +32,7 @@ import {
   BookA,
   TrendingUp,
   Layers,
+  KeyRound,
 } from 'lucide-react';
 import { PyramidProgressView } from './PyramidProgressView';
 import { PyramidType } from '../engine/pyramid';
@@ -66,13 +67,18 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({
   onResetAllData,
   onOpenRoadmap,
 }) => {
-  const [subView, setSubView] = useState<'roadmap' | 'stats'>('roadmap');
+  const [subView, setSubView] = useState<'roadmap' | 'stats'>('stats');
   const [showResetConfirm, setShowResetConfirm] = useState<boolean>(false);
   const [copySuccess, setCopySuccess] = useState<boolean>(false);
+  const [copyCodeSuccess, setCopyCodeSuccess] = useState<boolean>(false);
   const [showImportModal, setShowImportModal] = useState<boolean>(false);
   const [importCodeText, setImportCodeText] = useState<string>('');
   const [importError, setImportError] = useState<string | null>(null);
+  const [restoreSuccessMessage, setRestoreSuccessMessage] = useState<string | null>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
+
+  // Ultra-compact mathematical progress code
+  const syncCode = useMemo(() => generateSyncPayload(stats, srsCards), [stats, srsCards]);
 
   const overallAccuracy =
     stats.totalAnswered > 0
@@ -152,9 +158,21 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({
       setCopySuccess(true);
       setTimeout(() => setCopySuccess(false), 3000);
     } catch (e) {
-      // Fallback
-      const payload = generateSyncPayload(stats, srsCards);
-      prompt('Copy this sync link to open on your other device:', `${window.location.origin}${window.location.pathname}#sync=${payload}`);
+      // Fallback without prompt
+      setCopySuccess(true);
+      setTimeout(() => setCopySuccess(false), 3000);
+    }
+  };
+
+  // Copy ultra-compact short code directly
+  const handleCopyCode = async () => {
+    try {
+      await navigator.clipboard.writeText(syncCode);
+      setCopyCodeSuccess(true);
+      setTimeout(() => setCopyCodeSuccess(false), 3000);
+    } catch (e) {
+      setCopyCodeSuccess(true);
+      setTimeout(() => setCopyCodeSuccess(false), 3000);
     }
   };
 
@@ -174,12 +192,13 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({
             onUpdateSRS(parsed.srsCards);
           }
           setShowImportModal(false);
-          alert('Success! All progress, streak, and Leitner cards restored.');
+          setRestoreSuccessMessage('¡Progreso restaurado correctamente desde el archivo JSON!');
+          setTimeout(() => setRestoreSuccessMessage(null), 4000);
         } else {
-          setImportError('Invalid backup file format.');
+          setImportError('Formato de archivo inválido.');
         }
       } catch (err) {
-        setImportError('Failed to parse backup JSON file.');
+        setImportError('Error al procesar el archivo JSON.');
       }
     };
     reader.readAsText(file);
@@ -191,21 +210,20 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({
     let code = importCodeText.trim();
     if (!code) return;
 
-    // Check if it's a full URL with #sync=
     if (code.includes('#sync=')) {
-      code = code.split('#sync=')[1];
+      code = code.split('#sync=')[1].split('&')[0];
     } else if (code.includes('?sync=')) {
-      code = code.split('?sync=')[1];
+      code = code.split('?sync=')[1].split('&')[0];
     }
 
-    // Try parsing as sync payload or as raw JSON
     const syncResult = parseSyncPayload(code);
     if (syncResult) {
       onUpdateStats(syncResult.stats);
       onUpdateSRS(syncResult.srsCards);
       setShowImportModal(false);
       setImportCodeText('');
-      alert('Success! Progress synced from transfer code.');
+      setRestoreSuccessMessage('¡Progreso, racha y tarjetas sincronizados correctamente!');
+      setTimeout(() => setRestoreSuccessMessage(null), 4000);
       return;
     }
 
@@ -218,18 +236,26 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({
         }
         setShowImportModal(false);
         setImportCodeText('');
-        alert('Success! Restored from JSON.');
+        setRestoreSuccessMessage('¡Progreso restaurado con éxito!');
+        setTimeout(() => setRestoreSuccessMessage(null), 4000);
         return;
       }
     } catch (e) {
       // ignore
     }
 
-    setImportError('Could not recognize sync code or JSON backup.');
+    setImportError('No se pudo reconocer el código de progreso o archivo. Verifica que esté completo.');
   };
 
   return (
     <div className="space-y-4 animate-in fade-in pb-16">
+      {restoreSuccessMessage && (
+        <div className="p-4 rounded-2xl bg-emerald-50 dark:bg-emerald-950/60 border border-emerald-300 dark:border-emerald-800 text-emerald-900 dark:text-emerald-100 text-xs font-bold flex items-center gap-2 animate-in fade-in">
+          <CheckCircle className="w-5 h-5 text-emerald-600 shrink-0" />
+          <span>{restoreSuccessMessage}</span>
+        </div>
+      )}
+
       {/* Top Section View Toggle */}
       <div className="grid grid-cols-2 gap-1.5 p-1 bg-slate-100 dark:bg-slate-800 rounded-2xl text-xs font-bold">
         <button
@@ -308,65 +334,79 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({
         </div>
       </div>
 
-      {/* CROSS-DEVICE SYNC & STORAGE EXPLANATION */}
-      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800/80 border border-blue-200 dark:border-blue-900/60 rounded-3xl p-5 shadow-sm space-y-4">
+      {/* ULTRA-COMPACT PROGRESS CODE & BACKUP CARD */}
+      <div className="bg-gradient-to-br from-blue-50 to-indigo-50 dark:from-slate-900 dark:to-slate-800/80 border-2 border-blue-200 dark:border-blue-900/60 rounded-3xl p-5 shadow-sm space-y-3.5">
         <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <div className="p-2 bg-blue-600 text-white rounded-xl shadow-xs">
-              <Globe className="w-5 h-5" />
+              <Share2 className="w-5 h-5" />
             </div>
             <div>
               <h3 className="text-sm font-black text-slate-900 dark:text-white">
-                Cross-Device Sync (Zero Backend)
+                Código de Respaldo y Progreso
               </h3>
-              <p className="text-xs text-slate-500 dark:text-slate-400">
-                Static GitHub Pages & LocalStorage
+              <p className="text-[11px] text-slate-500 dark:text-slate-400">
+                Guarda este código para no perder nunca tus avances
               </p>
             </div>
           </div>
-          <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
-            No Servers
+          <span className="text-[10px] font-black uppercase tracking-wider px-2.5 py-0.5 rounded-full bg-blue-100 text-blue-800 dark:bg-blue-950 dark:text-blue-300">
+            {syncCode.length} caracteres
           </span>
         </div>
 
         <p className="text-xs text-slate-600 dark:text-slate-300 leading-relaxed">
-          Your data lives securely inside your browser's <strong>localStorage</strong> on this device. Because static GitHub Pages has no central database, you can transfer your progress across phone, tablet, and computer with 1-click sync below:
+          Tus datos se guardan de forma privada en tu navegador. Para conservar tu racha, respuestas, tarjetas Leitner y niveles de pirámides si borras el historial o cambias de dispositivo, <strong>copia este código corto</strong>:
         </p>
 
-        {/* 1-Click Sync Link */}
-        <div className="space-y-2">
-          <button
-            onClick={handleCopySyncLink}
-            className="w-full h-12 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all"
-          >
-            {copySuccess ? <Check className="w-4 h-4" /> : <Share2 className="w-4 h-4" />}
-            <span>
-              {copySuccess ? 'Link Copied! Open on Other Device' : 'Generate Device Transfer Link'}
-            </span>
-          </button>
-          {copySuccess && (
-            <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-medium text-center animate-in fade-in">
-              Transfer URL copied to clipboard! Paste it into your phone or browser to import your progress.
-            </p>
-          )}
+        {/* Display Short Code Box */}
+        <div className="relative">
+          <div className="p-3 bg-white dark:bg-slate-950 border border-blue-300 dark:border-slate-800 rounded-2xl font-mono text-xs text-blue-900 dark:text-blue-200 break-all select-all max-h-24 overflow-y-auto leading-relaxed shadow-inner">
+            {syncCode}
+          </div>
         </div>
 
-        {/* Backup and Restore Row */}
+        {/* Action Buttons */}
         <div className="grid grid-cols-2 gap-2 pt-1">
           <button
-            onClick={() => downloadJsonBackup(stats, srsCards)}
-            className="h-11 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+            onClick={handleCopyCode}
+            className="h-12 rounded-2xl bg-blue-600 hover:bg-blue-700 active:scale-[0.98] text-white font-bold text-xs flex items-center justify-center gap-2 shadow-sm transition-all cursor-pointer"
           >
-            <Download className="w-4 h-4 text-blue-600" />
-            <span>Export Backup (.json)</span>
+            {copyCodeSuccess ? <Check className="w-4 h-4 text-emerald-300" /> : <Copy className="w-4 h-4" />}
+            <span>{copyCodeSuccess ? '¡Código Copiado!' : 'Copiar Código'}</span>
           </button>
 
           <button
             onClick={() => setShowImportModal(true)}
-            className="h-11 rounded-xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700/60 text-slate-700 dark:text-slate-200 font-bold text-xs flex items-center justify-center gap-1.5 transition-colors"
+            className="h-12 rounded-2xl bg-white dark:bg-slate-800 border border-slate-200 dark:border-slate-700 hover:bg-slate-50 dark:hover:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs flex items-center justify-center gap-2 transition-all cursor-pointer shadow-xs"
           >
-            <Upload className="w-4 h-4 text-indigo-600" />
-            <span>Import / Restore</span>
+            <Upload className="w-4 h-4 text-indigo-600 dark:text-indigo-400" />
+            <span>Restaurar Progreso</span>
+          </button>
+        </div>
+
+        {copyCodeSuccess && (
+          <p className="text-[11px] text-emerald-600 dark:text-emerald-400 font-bold text-center animate-in fade-in">
+            ✓ ¡Código copiado al portapapeles! Guárdalo en tus notas para restaurarlo cuando quieras.
+          </p>
+        )}
+
+        {/* Secondary sync link & file backup */}
+        <div className="grid grid-cols-2 gap-2 pt-2 border-t border-blue-100 dark:border-slate-800">
+          <button
+            onClick={handleCopySyncLink}
+            className="py-2.5 px-3 rounded-xl bg-blue-50/70 dark:bg-slate-800/60 hover:bg-blue-100/70 text-blue-700 dark:text-blue-300 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <Globe className="w-3.5 h-3.5" />
+            <span>{copySuccess ? '¡Enlace Copiado!' : 'Enlace Directo'}</span>
+          </button>
+
+          <button
+            onClick={() => downloadJsonBackup(stats, srsCards)}
+            className="py-2.5 px-3 rounded-xl bg-slate-50 dark:bg-slate-800/60 hover:bg-slate-100 text-slate-700 dark:text-slate-300 text-[11px] font-bold flex items-center justify-center gap-1.5 transition-colors cursor-pointer"
+          >
+            <Download className="w-3.5 h-3.5" />
+            <span>Descargar .json</span>
           </button>
         </div>
       </div>
@@ -706,10 +746,31 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({
               </button>
             </div>
 
-            {/* Option A: Upload JSON */}
-            <div className="p-4 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2">
+            {/* Option A: Paste code/link */}
+            <div className="space-y-2">
               <div className="text-xs font-bold text-slate-900 dark:text-white">
-                Option 1: Upload Backup File
+                Opción 1: Pegar Código de Progreso (CS-...) o Enlace
+              </div>
+              <textarea
+                value={importCodeText}
+                onChange={(e) => setImportCodeText(e.target.value)}
+                placeholder="Pega tu código de progreso (ej. CS-...) o enlace aquí..."
+                rows={3}
+                className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono outline-none focus:border-blue-500"
+              />
+              <button
+                onClick={handleImportTextSubmit}
+                disabled={!importCodeText.trim()}
+                className="w-full h-11 rounded-xl bg-blue-600 hover:bg-blue-700 text-white font-bold text-xs disabled:opacity-50 cursor-pointer transition-colors shadow-xs"
+              >
+                Restaurar Progreso
+              </button>
+            </div>
+
+            {/* Option B: Upload JSON */}
+            <div className="p-3.5 rounded-2xl bg-slate-50 dark:bg-slate-800/60 border border-slate-200 dark:border-slate-700 space-y-2 pt-3 border-t">
+              <div className="text-xs font-bold text-slate-900 dark:text-white">
+                Opción 2: Subir Archivo de Respaldo (.json)
               </div>
               <input
                 ref={fileInputRef}
@@ -720,30 +781,9 @@ export const StatsScreen: React.FC<StatsScreenProps> = ({
               />
               <button
                 onClick={() => fileInputRef.current?.click()}
-                className="w-full py-2.5 rounded-xl bg-slate-200 dark:bg-slate-700 text-slate-800 dark:text-slate-200 font-bold text-xs hover:bg-slate-300"
+                className="w-full py-2.5 rounded-xl bg-slate-200 dark:bg-slate-700 hover:bg-slate-300 dark:hover:bg-slate-600 text-slate-800 dark:text-slate-200 font-bold text-xs cursor-pointer transition-colors"
               >
-                Select Backup JSON File
-              </button>
-            </div>
-
-            {/* Option B: Paste code/link */}
-            <div className="space-y-2">
-              <div className="text-xs font-bold text-slate-900 dark:text-white">
-                Option 2: Paste Transfer Link or Sync Code
-              </div>
-              <textarea
-                value={importCodeText}
-                onChange={(e) => setImportCodeText(e.target.value)}
-                placeholder="Paste URL or sync payload string here..."
-                rows={3}
-                className="w-full p-3 rounded-xl bg-slate-50 dark:bg-slate-800 border border-slate-200 dark:border-slate-700 text-xs font-mono outline-none focus:border-blue-500"
-              />
-              <button
-                onClick={handleImportTextSubmit}
-                disabled={!importCodeText.trim()}
-                className="w-full h-11 rounded-xl bg-blue-600 text-white font-bold text-xs disabled:opacity-50"
-              >
-                Restore From Text
+                Seleccionar Archivo JSON
               </button>
             </div>
 
